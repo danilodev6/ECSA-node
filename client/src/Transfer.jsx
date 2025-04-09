@@ -1,7 +1,10 @@
 import { useState } from "react";
 import server from "./server";
+import * as secp from "ethereum-cryptography/secp256k1";
+import * as keccak from "ethereum-cryptography/keccak";
+import * as utils from "ethereum-cryptography/utils";
 
-function Transfer({ address, setBalance }) {
+function Transfer({ address, setBalance, privateKey }) {
   const [sendAmount, setSendAmount] = useState("");
   const [recipient, setRecipient] = useState("");
 
@@ -11,16 +14,32 @@ function Transfer({ address, setBalance }) {
     evt.preventDefault();
 
     try {
-      const {
-        data: { balance },
-      } = await server.post(`send`, {
+      const data = {
         sender: address,
         amount: parseInt(sendAmount),
         recipient,
+      };
+      const messageHash = utils.toHex(
+        keccak.keccak256(utils.utf8ToBytes(JSON.stringify(data))),
+      );
+      const signedResponse = await secp.secp256k1.sign(
+        messageHash,
+        privateKey,
+        {
+          recovered: true,
+        },
+      );
+
+      const {
+        data: { balance },
+      } = await server.post(`send`, {
+        messageHash,
+        signedResponse,
+        data,
       });
       setBalance(balance);
     } catch (ex) {
-      alert(ex.response.data.message);
+      console.error("Transfer error:", ex);
     }
   }
 
