@@ -33,9 +33,9 @@ function Wallet({
       <h1>Your Wallet</h1>
 
       <label>
-        Your Key
+        Your privateKey
         <input
-          placeholder="Type a Signature, for example: 0x1"
+          placeholder="Type a privateKey, for example: 0x1"
           value={privateKey}
           onChange={onChange}
         ></input>
